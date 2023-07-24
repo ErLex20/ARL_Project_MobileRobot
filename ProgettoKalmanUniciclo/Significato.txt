@@ -1,0 +1,44 @@
+-sigmaX0,Y0,sigmatheta0: rappresenta la stima dell errore sulla imsura, ovvero la misura è copmpresa tra -3*10 e 3*10 pixel da quello che suppongo
+-xHat.yHat,thetaHat rapprenmesta la stima di x inizializzata ala valore vero + l'errore dato dalla stima precedentemente scritta 
+-LandMark è una matrice che contiene le coordinate di tutti i landamark; ogni riga contiene le coordinate di un landmark
+-sigmalandmark é la deviazione standard sull errore della posizione dei landmark stessi
+
+
+
+--CODICE DRAW-- 
+
+il tstep è l'intervallo di tempo tra una misura e l altra: se questo è eccessivamente grosso, 
+implica che io non stia più facendo misure, e quindi la posizione del robot di kalman si basa soltanto sulle informazioni delle ruote. aumenta quindi
+l incertezza. P infatti assume dei valori grossi. occhio all ultima riga che sono radianti! ecco perchè sembrano piccoli.
+
+tutta la legge di controllo vinene scritta esattaemnte come prima, quindi con legge proporzionale nelle velocità,
+l'unica differenza è che nei calcoli utilizzo xhat,yhat,thetaHat e non x,y,theta, in quanto dsi tratta di stime
+
+una volta calcolate le velocità v1 e v2, posso passsar e agli spostamenti delle ruote, calcolando quindi vr e vl, dividendo per i raggi, ottengo le
+velocità angolari delle ruote.
+
+lo spostamento nel tempo di campionamento delle ruote destra e sinistra sarà dato da ure e ule.
+l errore su tali misure lo prendo pari a sqrt(KR o KL*abs(ure o ule)), lo spostqamento vero quindi a questo punto è quello ure + la gaussiama dell errore
+
+__ DA QUI IN POI PARTE IL FILTRO FI KALMAN
+
+-parto dal passo di predizione, usando le equazioni 54 55 56, assegandole ai nomi xHatmeno...etc
+-calcolo le matrici giacobiane F e W, agigotnando solo i valòori non costantu
+-calcolo poi la matrice Pmeno (equazione 46)
+da questo punto in poi verifico se è possibile applicare il passo di correzione. Lo applico se ho una misuira di distanza dal landmark
+(se quindi è passato un tempo maoggiore a tstep dal momento in cui lo calcolo al tempoUltimaMIsura).
+Se è cosi, attuo il passo di correzione:
+-per ogni landmark calcolo una misura di distanza da quel landmark ->notare come sia presente 'x'
+-la misura attesa del landmark presenmta la stessa equaazione, con xHat al posto di x. quindi la stima della posa dell uniciclo
+-i conti succesiivi:  deltaX...H[indlandmark][0], servono per calcolare le componenti delle righe della matrice H.
+-invvoazione è la differnza tra la misura vera e misura attesa (equaazione 47), il suo guadagno dui kalman è K
+-aggionro la matrice P
+la correzione della stima sarà quindi il prpdotto tra la matrice K e innovazione. (sarà una matrice con 1 ruiga e 3 colonne-> xcorrezione, ycorrezione,thetacorrezione
+aggiorno di conseguenza xHat yHat e thetaHat.
+
+Se la condizione del tstep non fosse verificata (tstep grande), le xHat,yHat e thetaHat le imposto uguali a quelle del passo di predizione.
+
+
+
+
+
